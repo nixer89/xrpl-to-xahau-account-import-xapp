@@ -88,3 +88,12 @@ export interface IssuerVerification {
     username?: string,
     twitter?: string
 }
+
+export interface XummWebsocketResponse {
+    opened: boolean;
+    signed: boolean;
+    declined: boolean;
+    expired: boolean;
+    tx_success: boolean;
+    delivered_etb?:number
+  }

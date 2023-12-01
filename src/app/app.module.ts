@@ -6,10 +6,10 @@ import { FlexLayoutModule } from '@angular/flex-layout';
 
 //my modules
 import { FooterComponent } from './footer';
-import { XahauImortComponent } from './xahauimport';
+import { XahauImportComponent } from './xahauimport';
 import { AppService } from './services/app.service';
-import { XummService } from './services/xumm.service';
 import { XRPLWebsocket } from './services/xrplWebSocket';
+import { XahauWebsocket } from './services/xahauWebSocket';
 
 //Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -21,8 +21,6 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
@@ -33,7 +31,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
   declarations: [
     AppComponent,
     FooterComponent,
-    XahauImortComponent
+    XahauImportComponent
   ],
   imports: [
     BrowserModule,
@@ -51,16 +49,13 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     MatSnackBarModule,
     MatExpansionModule,
     MatProgressSpinnerModule,
-    MatDatepickerModule,
-    MatMomentDateModule,
     MatCheckboxModule,
     MatToolbarModule
   ],
   providers: [
     AppService,
-    XummService,
     XRPLWebsocket,
-    MatMomentDateModule
+    XahauWebsocket
   ],
   bootstrap: [AppComponent]
 })

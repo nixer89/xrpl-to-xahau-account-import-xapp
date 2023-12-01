@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
-import { XummService } from './services/xumm.service';
 import { OverlayContainer } from '@angular/cdk/overlay';
 
 @Component({
@@ -19,16 +18,17 @@ export class AppComponent implements OnInit {
 
   infoLabel:string = null;
 
-  ottReceived: Subject<any> = new Subject<any>();
   appStyleChanged: Subject<any> = new Subject<any>();
 
   timeout1: any;
   timeout2: any;
 
-  constructor(private route: ActivatedRoute, private xummService: XummService, private overlayContainer: OverlayContainer) { }
+  constructor(private route: ActivatedRoute, private overlayContainer: OverlayContainer) { }
 
   ngOnInit() {
     this.route.queryParams.subscribe(async params => {
+      console.log("TEST");
+
       this.infoLabel = JSON.stringify(params);
       if(this.timeout1) {
         //console.log("clearing timeout1");
@@ -84,40 +84,6 @@ export class AppComponent implements OnInit {
       this.overlayContainer.getContainerElement().classList.add(this.themeClass);
 
       this.appStyleChanged.next({theme: this.themeClass, color: this.backgroundColor});
-
-      if(xAppToken) {
-        let ottResponse:any = await this.xummService.getxAppOTTData(xAppToken);
-        //console.log("ottResponse: " + JSON.stringify(ottResponse));
-
-        this.alreadySent = true;
-
-        if(ottResponse && ottResponse.error) {
-          //console.log("error OTT, only sending app style");
-          this.ottReceived.next({style: xAppStyle});
-        } else {
-          this.ottReceived.next(ottResponse);
-          this.alreadySent = true;
-        }      
-      } else {
-        //didn't got an ott. Just send over the app style (even if not available)
-        this.timeout1 = setTimeout(() => {
-          //console.log("checking with: " + this.receivedParams);
-          if(this.receivedParams && !this.alreadySent) {
-            //console.log("only received appstyle")
-            this.ottReceived.next({style: xAppStyle});
-            this.alreadySent = true;
-          }
-        }, 1000);
-      }
     });
-
-    this.timeout2 = setTimeout(() => {
-      //console.log("checking with2: " + this.receivedParams);
-      if(!this.receivedParams && !this.alreadySent) {
-        //console.log("didnt received any params")
-        this.ottReceived.next({style: null});
-        this.alreadySent = true;
-      }
-    }, 3000);
   }
 }
