@@ -20,163 +20,174 @@
   <label *ngIf="infoLabel2" style="color: red">{{infoLabel2}}</label>
   <label *ngIf="infoLabel3" style="color: red">{{infoLabel3}}</label-->
 
-  <mat-vertical-stepper linear #importStepper class="theme-background">
-    
-    <mat-step completed="false" editable="false" fxLayout="column" fxLayoutGap="0.5em">
-      <mat-card fxLayout="column" fxLayoutGap="1em">
-          <ng-template matStepLabel>Description</ng-template>
-          <label>This xApp will guide you through the process of importing / activating your XRP Ledger account on the Xahau Network</label>
-          <label>Since the XRP Ledger and the Xahau Network use the same address and signing algorithms, the same account and key (seed / secret) can be used on both networks.</label>
-          <label>This is similar to all EVM based chains where you can use the same account on different EVM chains.</label>
-          
-          <label>By importing your XRP Ledger account into Xahau using this xApp, no XRP are lost or burned other than the transaction fee of 0.000012 XRP.</label>
-          <label>Once the import was sucessful, you will get gifted 2 XAH on the Xahau Network. (XAH = native currency on Xahau)</label>
-          <label>This covers your account reserve of currently 1 XAH and gives you the ability to create up to 5 objects on Xahau, such as trustlines, escrows, etc.</label>
-          <label>That is a good start, right?</label>
+  <div *ngIf="xummOutdated">
+    <mat-card fxFlex fxLayout="column" fxLayoutAlign="start center" class="mat-card-orange margin-5">
+      <label style="text-align: center;">Your current Xumm/Xaman App version is: {{xummMajorVersion}}.{{xummMinorVersion}}.</label>
+      <label>&nbsp;</label>
+      <label style="text-align: center;">Please update your Xumm/Xaman App to version 2.6 or higher to be able to use this xApp.</label>
+    </mat-card>
+  </div>
 
-          <div fxLayout="row">
-            <mat-checkbox [(ngModel)]="termsAndConditions">
-              Please read and accept the
-              <label class="xumm-orange" (click)="openTermsAndConditions()"> Terms & Conditions </label>
-              and the
-              <label class="xumm-orange" (click)="openPrivacyPolicy()"> Privacy Policy </label>
-              before you can continue.
-            </mat-checkbox>
-          </div>
-          
-          <div style="padding-top: 0.5em;" fxLayoutGap="0.5em">
-            <button mat-raised-button color="primary" (click)="moveNext()" [disabled]="!termsAndConditions">Next</button>
-        </div>
-      </mat-card>
-    </mat-step>
-
-    <mat-step completed="false" editable="false">
-      <mat-card fxLayout="column" fxLayoutGap="0.5em">
-          <ng-template matStepLabel>Account Selection</ng-template>
-          <div fxLayout="column" fxLayoutGap="0.5em" *ngIf="originalAccountInfo">
-            <label class="description">What is the account you want to import into Xahau?</label>
-            <label *ngIf="originalAccountInfo && (originalAccountInfo.Account || originalAccountInfo.account)">Currently selected:</label>
-            <label *ngIf="originalAccountInfo && originalAccountInfo.Account">{{originalAccountInfo.Account}}</label>
-            <label *ngIf="originalAccountInfo && originalAccountInfo.account">{{originalAccountInfo.account}}</label>
-
-            <div fxLayoutAlign="start center" style="padding-top: 0.5em;">
-              <button mat-raised-button color="primary" (click)="changeAccount()" [disabled]="loadingData">{{originalAccountInfo && (originalAccountInfo.Account || originalAccountInfo.account) ? 'Change Account' : 'Sign In' }}</button>
-            </div>
-          </div>
-
-          <div style="padding-top: 0.5em;" fxLayout="column" fxLayoutGap="0.5em">
-            <mat-card fxLayout="column" *ngIf="testMode && !loadingData" class="mat-card-orange">
-              <label>You are connected to the Testnet. The Burn and Import transactions will be executed on the Testnets.</label>
-              <label>To change the network, please use the buttons at the top of your screen.</label>
-            </mat-card>
-
-            <mat-card *ngIf="originalAccountInfo && originalAccountInfo.error && originalAccountInfo.error == 'actNotFound' && !loadingData" class="mat-card-red">
-              <label>Account is not activated on the XRP Ledger {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
-            </mat-card>
-
-            <mat-card *ngIf="originalAccountInfo && originalAccountInfo.Account && xahauAccountInfo && xahauAccountInfo.Account && !loadingData" class="mat-card-red">
-              <label>Account is already imported or activated on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
-            </mat-card>
-
-            <mat-card *ngIf="originalAccountInfo && xrplAccountHasSignerList && !loadingData" class="mat-card-red">
-              <label>This account has a SignerList set. Such accounts are currently not supported in this xApp.</label>
-            </mat-card>
-          </div>
-
-          <div *ngIf="!originalAccountInfo || loadingData" fxLayoutAlign="start center">
-            <label>Loading...</label>
-            <mat-progress-spinner color="primary" mode="indeterminate" diameter=25></mat-progress-spinner>
-          </div>
-
-          <div style="padding-top: 0.5em;" fxLayoutGap="0.5em">
-              <button mat-raised-button color="primary" (click)="moveNext()" [disabled]="!originalAccountInfo || !originalAccountInfo.Account || xrplAccountHasSignerList || (xahauAccountInfo && xahauAccountInfo.Account) || loadingData">Next</button>
-              <button mat-raised-button class="xumm-grey-background" (click)="moveBack()" [disabled]="!originalAccountInfo || loadingData">Back</button>
-          </div>
-      </mat-card>
-    </mat-step>
-
-    <mat-step completed="false" editable="false">
-      <mat-card fxLayout="column" fxLayoutGap="0.5em">
-          <ng-template matStepLabel>Burn Transaction</ng-template>
-          <div fxLayout="column" fxLayoutGap="0.5em" *ngIf="originalAccountInfo && !xrplAccountHasRegularKey">
-            <label class="description">To import your XRPL Account into Xahau, we need to burn a tiny tiny amount of XRP.</label>
-            <label class="description">We will achieve this, by executing an AccountSet transaction which does not change your account (No Operation transaction) but burns a small amount of XRP.</label>
-            <label class="description">The amount we will burn is 10 drops or 0.000010 XRP. So really small :-)</label>
+  <div *ngIf="!xummOutdated">
+    <mat-vertical-stepper linear #importStepper class="theme-background">
+      
+      <mat-step completed="false" editable="false" fxLayout="column" fxLayoutGap="0.5em">
+        <mat-card fxLayout="column" fxLayoutGap="1em">
+            <ng-template matStepLabel>Description</ng-template>
+            <label>This xApp will guide you through the process of importing / activating your XRP Ledger account on the Xahau Network</label>
+            <label>Since the XRP Ledger and the Xahau Network use the same address and signing algorithms, the same account and key (seed / secret) can be used on both networks.</label>
+            <label>This is similar to all EVM based chains where you can use the same account on different EVM chains.</label>
             
-            <div fxLayoutAlign="start center" style="padding-top: 0.5em;">
-              <button mat-raised-button color="primary" (click)="executeBurnTransaction()" [disabled]="loadingData || (burn_tx_hash && burnSuccess)">Execute Burn</button>
-            </div>
-          </div>
+            <label>By importing your XRP Ledger account into Xahau using this xApp, no XRP are lost or burned other than the transaction fee of 0.000012 XRP.</label>
+            <label>Once the import was sucessful, you will get gifted 2 XAH on the Xahau Network. (XAH = native currency on Xahau)</label>
+            <label>This covers your account reserve of currently 1 XAH and gives you the ability to create up to 5 objects on Xahau, such as trustlines, escrows, etc.</label>
+            <label>That is a good start, right?</label>
 
-          <div fxLayout="column" fxLayoutGap="0.5em" *ngIf="originalAccountInfo && xrplAccountHasRegularKey">
-            <mat-card class="mat-card-orange" fxLayout="column">
-              <label>We have detected that your account has a regular key set. To import your account with the current regular key setting into Xahau, we need to create a "SetRegularKey" transaction which burns a small amount of XRP.</label>
-              <label>This proofs to the Xahau network that you are able to sign transactions with your regular key and it will also import the regular key setting you have on the XRPL.</label>
-            </mat-card>
-            <label class="description">To import your XRPL Account into Xahau, we need to burn a tiny tiny amount of XRP.</label>
-            <label class="description">We will achieve this, by executing an SetRegularKey transaction which does not change your account (No Operation transaction) but burns a small amount of XRP.</label>
-            <label class="description">The amount we will burn is 10 drops or 0.000010 XRP. So really small :-)</label>
+            <div fxLayout="row">
+              <mat-checkbox [(ngModel)]="termsAndConditions">
+                Please read and accept the
+                <label class="xumm-orange" (click)="openTermsAndConditions()"> Terms & Conditions </label>
+                and the
+                <label class="xumm-orange" (click)="openPrivacyPolicy()"> Privacy Policy </label>
+                before you can continue.
+              </mat-checkbox>
+            </div>
             
-            <div fxLayoutAlign="start center" style="padding-top: 0.5em;">
-              <button mat-raised-button color="primary" (click)="executeBurnTransaction()" [disabled]="loadingData || (burn_tx_hash && burnSuccess)">Execute Burn</button>
+            <div style="padding-top: 0.5em;" fxLayoutGap="0.5em">
+              <button mat-raised-button color="primary" (click)="moveNext()" [disabled]="!termsAndConditions">Next</button>
+          </div>
+        </mat-card>
+      </mat-step>
+
+      <mat-step completed="false" editable="false">
+        <mat-card fxLayout="column" fxLayoutGap="0.5em">
+            <ng-template matStepLabel>Account Selection</ng-template>
+            <div fxLayout="column" fxLayoutGap="0.5em" *ngIf="originalAccountInfo">
+              <label class="description">What is the account you want to import into Xahau?</label>
+              <label *ngIf="originalAccountInfo && (originalAccountInfo.Account || originalAccountInfo.account)">Currently selected:</label>
+              <label *ngIf="originalAccountInfo && originalAccountInfo.Account">{{originalAccountInfo.Account}}</label>
+              <label *ngIf="originalAccountInfo && originalAccountInfo.account">{{originalAccountInfo.account}}</label>
+
+              <div fxLayoutAlign="start center" style="padding-top: 0.5em;">
+                <button mat-raised-button color="primary" (click)="changeAccount()" [disabled]="loadingData">{{originalAccountInfo && (originalAccountInfo.Account || originalAccountInfo.account) ? 'Change Account' : 'Sign In' }}</button>
+              </div>
             </div>
-          </div>
 
-          <div style="padding-top: 0.5em;">
-            <mat-card *ngIf="burn_tx_hash && !burnSuccess && !loadingData" class="mat-card-red">
-              <label>Burn transaction not successful on the XRP Ledger {{testMode ? 'Testnet' : 'Mainnet'}}. Please try again.</label>
-            </mat-card>
+            <div style="padding-top: 0.5em;" fxLayout="column" fxLayoutGap="0.5em">
+              <mat-card fxLayout="column" *ngIf="testMode && !loadingData" class="mat-card-orange">
+                <label>You are connected to the Testnet. The Burn and Import transactions will be executed on the Testnets.</label>
+                <label>To change the network, please use the buttons at the top of your screen.</label>
+              </mat-card>
 
-            <mat-card *ngIf="burn_tx_hash && burnSuccess && !loadingData" class="mat-card-green">
-              <label>Burn transaction successful on the XRP Ledger {{testMode ? 'Testnet' : 'Mainnet'}}. You can continue now!</label>
-            </mat-card>
-          </div>
+              <mat-card *ngIf="originalAccountInfo && originalAccountInfo.error && originalAccountInfo.error == 'actNotFound' && !loadingData" class="mat-card-red">
+                <label>Account is not activated on the XRP Ledger {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
+              </mat-card>
 
-          <div *ngIf="!originalAccountInfo || loadingData" fxLayoutAlign="start center">
-            <label>Loading...</label>
-            <mat-progress-spinner color="primary" mode="indeterminate" diameter=25></mat-progress-spinner>
-          </div>
+              <mat-card *ngIf="originalAccountInfo && originalAccountInfo.Account && xahauAccountInfo && xahauAccountInfo.Account && !loadingData" class="mat-card-red">
+                <label>Account is already imported or activated on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
+              </mat-card>
 
-          <div style="padding-top: 0.5em;" fxLayoutGap="0.5em">
-              <button mat-raised-button color="primary" (click)="moveNext()" [disabled]="!originalAccountInfo || !burn_tx_hash || !burnSuccess|| loadingData">Next</button>
-              <button mat-raised-button class="xumm-grey-background" (click)="moveBack()" [disabled]="!originalAccountInfo || loadingData">Back</button>
-          </div>
-      </mat-card>
-    </mat-step>
-
-    <mat-step completed="false" editable="false">
-      <mat-card fxLayout="column" fxLayoutGap="0.5em">
-          <ng-template matStepLabel>Import Transaction</ng-template>
-          <div fxLayout="column" fxLayoutGap="0.5em" *ngIf="originalAccountInfo">
-            <label class="description">To import your XRPL Account into Xahau, we need to execute an "Import" transaction on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
-            <label class="description">If you click the button below, an Import transaction for your account is generated and you will be asked to switch the network to the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
-            <label class="description">Please accept switching the network since the Import transaction is only valid on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}</label>
-            
-            <div fxLayoutAlign="start center" style="padding-top: 0.5em;">
-              <button mat-raised-button color="primary" (click)="importTransaction()" [disabled]="loadingData || errorBlob || (import_tx_hash && importSuccess)">Import Account</button>
+              <mat-card *ngIf="originalAccountInfo && xrplAccountHasSignerList && !loadingData" class="mat-card-red">
+                <label>This account has a SignerList set. Such accounts are currently not supported in this xApp.</label>
+              </mat-card>
             </div>
-          </div>
 
-          <div style="padding-top: 0.5em;">
-            <mat-card *ngIf="import_tx_hash && !importSuccess && !loadingData" class="mat-card-red">
-              <label>Import transaction not successful on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}. Please try again.</label>
-            </mat-card>
+            <div *ngIf="!originalAccountInfo || loadingData" fxLayoutAlign="start center">
+              <label>Loading...</label>
+              <mat-progress-spinner color="primary" mode="indeterminate" diameter=25></mat-progress-spinner>
+            </div>
 
-            <mat-card *ngIf="import_tx_hash && burnSuccess && !loadingData" class="mat-card-green">
-              <label>Burn transaction successful on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}. You can close the xApp now!</label>
-            </mat-card>
+            <div style="padding-top: 0.5em;" fxLayoutGap="0.5em">
+                <button mat-raised-button color="primary" (click)="moveNext()" [disabled]="!originalAccountInfo || !originalAccountInfo.Account || xrplAccountHasSignerList || (xahauAccountInfo && xahauAccountInfo.Account) || loadingData">Next</button>
+                <button mat-raised-button class="xumm-grey-background" (click)="moveBack()" [disabled]="!originalAccountInfo || loadingData">Back</button>
+            </div>
+        </mat-card>
+      </mat-step>
 
-            <mat-card *ngIf="errorBlob && !import_tx_hash && !burnSuccess && !loadingData" class="mat-card-green">
-              <label>We could not correctly retrieve your Burn (AccountSet) transaction. Please go back and try again.</label>
-            </mat-card>
-          </div>
+      <mat-step completed="false" editable="false">
+        <mat-card fxLayout="column" fxLayoutGap="0.5em">
+            <ng-template matStepLabel>Burn Transaction</ng-template>
+            <div fxLayout="column" fxLayoutGap="0.5em" *ngIf="originalAccountInfo && !xrplAccountHasRegularKey">
+              <label class="description">To import your XRPL Account into Xahau, we need to burn a tiny tiny amount of XRP.</label>
+              <label class="description">We will achieve this, by executing an AccountSet transaction which does not change your account (No Operation transaction) but burns a small amount of XRP.</label>
+              <label class="description">The amount we will burn is 10 drops or 0.000010 XRP. So really small :-)</label>
+              
+              <div fxLayoutAlign="start center" style="padding-top: 0.5em;">
+                <button mat-raised-button color="primary" (click)="executeBurnTransaction()" [disabled]="loadingData || (burn_tx_hash && burnSuccess)">Execute Burn</button>
+              </div>
+            </div>
 
-          <div *ngIf="!originalAccountInfo || loadingData" fxLayoutAlign="start center">
-            <label>Loading...</label>
-            <mat-progress-spinner color="primary" mode="indeterminate" diameter=25></mat-progress-spinner>
-          </div>
-      </mat-card>
-    </mat-step>
+            <div fxLayout="column" fxLayoutGap="0.5em" *ngIf="originalAccountInfo && xrplAccountHasRegularKey">
+              <mat-card class="mat-card-orange" fxLayout="column">
+                <label>We have detected that your account has a regular key set. To import your account with the current regular key setting into Xahau, we need to create a "SetRegularKey" transaction which burns a small amount of XRP.</label>
+                <label>This proofs to the Xahau network that you are able to sign transactions with your regular key and it will also import the regular key setting you have on the XRPL.</label>
+              </mat-card>
+              <label>To import your XRPL Account into Xahau, we need to burn a tiny tiny amount of XRP.</label>
+              <label>We will achieve this, by executing an SetRegularKey transaction which does not change your account (No Operation transaction) but burns a small amount of XRP.</label>
+              <label>The amount we will burn is 10 drops or 0.000010 XRP. So really small :-)</label>
+              
+              <div fxLayoutAlign="start center" style="padding-top: 0.5em;">
+                <button mat-raised-button color="primary" (click)="executeBurnTransaction()" [disabled]="loadingData || (burn_tx_hash && burnSuccess)">Execute Burn</button>
+              </div>
+            </div>
 
-  </mat-vertical-stepper>
+            <div style="padding-top: 0.5em;">
+              <mat-card *ngIf="burn_tx_hash && !burnSuccess && !loadingData" class="mat-card-red">
+                <label>Burn transaction not successful on the XRP Ledger {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
+                <label>{{burnErrorLabel}}</label>
+              </mat-card>
+
+              <mat-card *ngIf="burn_tx_hash && burnSuccess && !loadingData" class="mat-card-green">
+                <label>Burn transaction successful on the XRP Ledger {{testMode ? 'Testnet' : 'Mainnet'}}. You can continue now!</label>
+              </mat-card>
+            </div>
+
+            <div *ngIf="!originalAccountInfo || loadingData" fxLayoutAlign="start center">
+              <label>Loading...</label>
+              <mat-progress-spinner color="primary" mode="indeterminate" diameter=25></mat-progress-spinner>
+            </div>
+
+            <div style="padding-top: 0.5em;" fxLayoutGap="0.5em">
+                <button mat-raised-button color="primary" (click)="moveNext()" [disabled]="!originalAccountInfo || !burn_tx_hash || !burnSuccess|| loadingData">Next</button>
+                <button mat-raised-button class="xumm-grey-background" (click)="moveBack()" [disabled]="!originalAccountInfo || loadingData">Back</button>
+            </div>
+        </mat-card>
+      </mat-step>
+
+      <mat-step completed="false" editable="false">
+        <mat-card fxLayout="column" fxLayoutGap="0.5em">
+            <ng-template matStepLabel>Import Transaction</ng-template>
+            <div fxLayout="column" fxLayoutGap="0.5em" *ngIf="originalAccountInfo">
+              <label class="description">To import your XRPL Account into Xahau, we need to execute an "Import" transaction on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
+              <label class="description">If you click the button below, an Import transaction for your account is generated and you will be asked to switch the network to the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
+              <label class="description">Please accept switching the network since the Import transaction is only valid on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}</label>
+              
+              <div fxLayoutAlign="start center" style="padding-top: 0.5em;">
+                <button mat-raised-button color="primary" (click)="importTransaction()" [disabled]="loadingData || errorBlob || (import_tx_hash && importSuccess)">Import Account</button>
+              </div>
+            </div>
+
+            <div style="padding-top: 0.5em;">
+              <mat-card *ngIf="import_tx_hash && !importSuccess && !loadingData" class="mat-card-red">
+                <label>Import transaction not successful on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}. Please try again.</label>
+              </mat-card>
+
+              <mat-card *ngIf="import_tx_hash && burnSuccess && !loadingData" class="mat-card-green">
+                <label>Burn transaction successful on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}. You can close the xApp now!</label>
+              </mat-card>
+
+              <mat-card *ngIf="errorBlob && !import_tx_hash && !burnSuccess && !loadingData" class="mat-card-green">
+                <label>We could not correctly retrieve your Burn (AccountSet) transaction. Please go back and try again.</label>
+              </mat-card>
+            </div>
+
+            <div *ngIf="!originalAccountInfo || loadingData" fxLayoutAlign="start center">
+              <label>Loading...</label>
+              <mat-progress-spinner color="primary" mode="indeterminate" diameter=25></mat-progress-spinner>
+            </div>
+        </mat-card>
+      </mat-step>
+
+    </mat-vertical-stepper>
+  </div>
 </div>

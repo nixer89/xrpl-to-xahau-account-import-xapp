@@ -26,7 +26,11 @@ export class AppComponent implements OnInit {
   constructor(private route: ActivatedRoute, private overlayContainer: OverlayContainer) { }
 
   ngOnInit() {
+    let init = Date.now();
     this.route.queryParams.subscribe(async params => {
+      let start = Date.now();
+
+      console.log("FROM INIT TO SUBSCRIBE RECEIVED: " + (init-start) + " ms.");
       console.log("TEST");
 
       this.infoLabel = JSON.stringify(params);
@@ -84,6 +88,9 @@ export class AppComponent implements OnInit {
       this.overlayContainer.getContainerElement().classList.add(this.themeClass);
 
       this.appStyleChanged.next({theme: this.themeClass, color: this.backgroundColor});
+
+      let end = Date.now();
+      console.log("LOADED APP COMPONENT: " + (end-start) + " ms.");
     });
   }
 }
