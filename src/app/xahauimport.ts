@@ -97,6 +97,24 @@ export class XahauImportComponent implements OnInit, OnDestroy {
   async ngOnInit() {
 
     this.xummClient = window['xummClient'];
+
+    this.themeReceived = this.themeChanged.subscribe(async appStyle => {
+
+      this.themeClass = appStyle.theme;
+      this.backgroundColor = appStyle.color;
+
+      var bodyStyles = document.body.style;
+      bodyStyles.setProperty('--background-color', this.backgroundColor);
+      this.overlayContainer.getContainerElement().classList.remove('dark-theme');
+      this.overlayContainer.getContainerElement().classList.remove('light-theme');
+      this.overlayContainer.getContainerElement().classList.remove('moonlight-theme');
+      this.overlayContainer.getContainerElement().classList.remove('royal-theme');
+      this.overlayContainer.getContainerElement().classList.add(this.themeClass);
+
+      console.log("TEST 2");
+    });
+
+    
     let start = Date.now();
 
     let pong = await this.xummClient.ping();
@@ -137,29 +155,14 @@ export class XahauImportComponent implements OnInit, OnDestroy {
     })
 
     this.loadingData = false;
-    await this.xummClient.xapp.ready();
+    let readyResult = await this.xummClient.xapp.ready();
+    console.log("READY RESULT: " + readyResult);
 
     let end = Date.now();
 
     console.log("LOADING ALL: " + (end-start) + " ms.");
 
     this.tw.start();
-
-    this.themeReceived = this.themeChanged.subscribe(async appStyle => {
-
-      this.themeClass = appStyle.theme;
-      this.backgroundColor = appStyle.color;
-
-      var bodyStyles = document.body.style;
-      bodyStyles.setProperty('--background-color', this.backgroundColor);
-      this.overlayContainer.getContainerElement().classList.remove('dark-theme');
-      this.overlayContainer.getContainerElement().classList.remove('light-theme');
-      this.overlayContainer.getContainerElement().classList.remove('moonlight-theme');
-      this.overlayContainer.getContainerElement().classList.remove('royal-theme');
-      this.overlayContainer.getContainerElement().classList.add(this.themeClass);
-
-      console.log("TEST 2");
-    });
     //this.infoLabel = JSON.stringify(this.device.getDeviceInfo());
   }
 
