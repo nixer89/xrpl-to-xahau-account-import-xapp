@@ -94,6 +94,4 @@ export interface XummWebsocketResponse {
     signed: boolean;
     declined: boolean;
     expired: boolean;
-    tx_success: boolean;
-    delivered_etb?:number
   }

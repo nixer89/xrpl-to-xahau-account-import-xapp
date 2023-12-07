@@ -60,6 +60,7 @@ export class XahauImportComponent implements OnInit, OnDestroy {
   
   importSuccess:boolean = false;
   import_tx_hash:string = null;
+  importErrorLabel:string = null;
 
   errorBlob:boolean = false;
   
@@ -100,8 +101,6 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
     let pong = await this.xummClient.ping();
     console.log("pong: " + JSON.stringify(pong));
-
-    await this.xummClient.environment;
 
     let ottData = await this.xummClient.environment.ott;
 
@@ -169,21 +168,6 @@ export class XahauImportComponent implements OnInit, OnDestroy {
       this.themeReceived.unsubscribe();
   }
 
-  async loadXRPLFeeReserves() {
-    let fee_request:any = {
-      command: "ledger_entry",
-      index: "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A651",
-      ledger_index: "validated"
-    }
-
-    let feeSetting:any = await this.xrplWebSocket.getWebsocketMessage("fee-settings", fee_request, this.testMode);
-    this.accountReserve = feeSetting?.result?.node["ReserveBase"];
-    this.ownerReserve = feeSetting?.result?.node["ReserveIncrement"];
-
-    console.log("resolved accountReserve: " + this.accountReserve);
-    console.log("resolved ownerReserve: " + this.ownerReserve);
-  }
-
   async loadXrplAccountData(xrplAccount: string) {
     try {
       //this.infoLabel = "loading " + xrplAccount;
@@ -208,6 +192,8 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
             if(this.xrplAccountHasRegularKey) {
               this.regularKeyAccount = this.originalAccountInfo.RegularKey;
+            } else {
+              this.regularKeyAccount = null;
             }
 
             this.isMasterKeyDisabled = isMasterKeyDisabled(this.originalAccountInfo.Flags);
@@ -295,8 +281,10 @@ export class XahauImportComponent implements OnInit, OnDestroy {
         console.log(resolvedPayload);
 
         if(resolvedPayload && successfullSignInPayloadValidation(resolvedPayload)) {
-          await this.loadXrplAccountData(resolvedPayload.response.account);
-          await this.loadXahauAccountData(resolvedPayload.response.account);
+          await Promise.all([
+            this.loadXrplAccountData(resolvedPayload.response.account),
+            this.loadXahauAccountData(resolvedPayload.response.account)
+          ]);
         }
       }
 
@@ -441,21 +429,38 @@ export class XahauImportComponent implements OnInit, OnDestroy {
                   this.burn_tx_hash = "abc";
                 }
               } else {
-                console.log("Transaction signer: '"+ signerAddress + "' does not match forces signer: '" + this.signingAccountForImport + "'");
+                console.log("Transaction signer: '"+ signerAddress + "' does not match expected signer: '" + this.signingAccountForImport + "'");
                 this.burnSuccess = false;
                 this.burn_tx_hash = "abc";
+
+                if(this.originalAccountInfo.Account === signerAddress || this.regularKeyAccount === signerAddress) {
+                  this.burnErrorLabel = "Expected transaction does not match signed transaction. Not submitting transaction to the XRP Ledger."
+                } else {
+                  this.burnErrorLabel = "Transaction signer: '"+ signerAddress + "' does not match expected signer: '" + this.signingAccountForImport + "'. Not submitting transaction. Please try again."
+                }
               }
             } else {
               console.log("SIGNATURE INVALID");
+              this.burnSuccess = false;
+              this.burn_tx_hash = "abc";
+              this.burnErrorLabel = "Transaction signature invalid. Please try again."
             }
 
           } else if(resolvedPayload && successfullAccountSetPayloadValidation(resolvedPayload)) {
             this.burnSuccess = true;
             this.burn_tx_hash = resolvedPayload.response.txid;
+            this.signingAccountForImport = resolvedPayload.response.account;
           } else {
             this.burnSuccess = false;
             this.burn_tx_hash = resolvedPayload.response.txid || "abc";
           }
+        } else {
+          this.burnSuccess = false;
+          this.burn_tx_hash = "abc";
+          if(websocketResult.declined)
+            this.burnErrorLabel = "You declined the sign request.";
+          else if(websocketResult.expired)
+            this.burnErrorLabel = "The sign request has expired. Please try again.";
         }
       } else {
         throw "Error creating Burn payload for account: " + this.originalAccountInfo.Account;
@@ -501,7 +506,7 @@ export class XahauImportComponent implements OnInit, OnDestroy {
           txjson: {
             TransactionType: "Import",
             Fee: 0,
-            Sequence: 0,
+            Sequence: this.xahauAccountInfo.Sequence ? this.xahauAccountInfo.Sequence : 0,
             NetworkID: this.testMode ? 21338 : 21337,
             Blob: blob.toUpperCase()
           },
@@ -532,14 +537,31 @@ export class XahauImportComponent implements OnInit, OnDestroy {
   
           console.log("PAYLOAD:");
           console.log(resolvedPayload);
-  
+
           if(resolvedPayload && successfullImportPayloadValidation(resolvedPayload)) {
+            this.importErrorLabel = null;
             this.importSuccess = true;
             this.import_tx_hash = resolvedPayload.response.txid;
           } else {
             this.importSuccess = false;
             this.import_tx_hash = resolvedPayload.response.txid || "abc";
+
+            let trxBlob = resolvedPayload.response.hex;
+            let decodedHex = decode(trxBlob);
+            let signerAddress = deriveAddress(decodedHex.SigningPubKey);
+
+            if(this.signingAccountForImport != signerAddress) {
+              this.importErrorLabel = "Transaction signer: '"+ signerAddress + "' does not match forces signer: '" + this.signingAccountForImport + "'";
+            }
           }
+        } else {
+          this.importSuccess = false;
+          this.import_tx_hash = "abc";
+
+          if(websocketResult.declined)
+            this.importErrorLabel = "You declined the sign request.";
+          else if(websocketResult.expired)
+            this.importErrorLabel = "The sign request has expired. Please try again.";
         }
       } else {
         console.log("ERROR RESOLVING BLOB")
@@ -562,30 +584,28 @@ export class XahauImportComponent implements OnInit, OnDestroy {
             opened: false,
             expired: false,
             signed: false,
-            declined: false,
-            tx_success: false,
+            declined: false
           };
     
           if (createdPayload) {
             console.log("SUBSCRIBING TO PAYLOAD EVENTS")
             //subscribe for updates on payload
             let payloadSubscription = await this.xummClient.payload.subscribe( createdPayload, async (message) => {
-                // console.log("message", message);
+                console.log("websocket message", message);
                 if (message && message.uuid === createdPayload?.uuid) {
                   if (message.data.opened) {
                     //sign request has been opened
                     console.log("Sign request has been OPENED");
                     websocketResponse.opened = true;
-                  } else if (message.data.signed) {
-                    console.log("Sign request has been SIGNED");
+                  } else if (message.data.signed != null) {
+                    console.log("Sign request has been SIGNED OR CLOSED");
                     //request has been signed
-                    websocketResponse.signed = true;
-                    let payloadResult = await this.xummClient.payload.get(createdPayload);
-    
-                    if (payloadResult?.response?.dispatched_result === "tesSUCCESS") {
-                      websocketResponse.tx_success = true;
+                    if(message.data.signed) {
+                      websocketResponse.signed = true;    
+                    } else {
+                      websocketResponse.declined = true
                     }
-    
+
                     resolve(websocketResponse);
                   } else if (message.data.closed) {
                     console.log("Sign request has been DECLINED");
