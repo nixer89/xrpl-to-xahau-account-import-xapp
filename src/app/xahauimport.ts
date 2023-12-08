@@ -70,6 +70,7 @@ export class XahauImportComponent implements OnInit, OnDestroy {
   private themeReceived: Subscription;
 
   loadingData:boolean = true;
+  initializing:boolean = true;
 
   infoLabel:string = null;
 
@@ -100,6 +101,8 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
     this.themeReceived = this.themeChanged.subscribe(async appStyle => {
 
+      let start = Date.now();
+
       this.themeClass = appStyle.theme;
       this.backgroundColor = appStyle.color;
 
@@ -111,58 +114,57 @@ export class XahauImportComponent implements OnInit, OnDestroy {
       this.overlayContainer.getContainerElement().classList.remove('royal-theme');
       this.overlayContainer.getContainerElement().classList.add(this.themeClass);
 
-      console.log("TEST 2");
-    });
+      console.log("THEME SET TO: " + this.themeClass);
 
-    
-    let start = Date.now();
+      let pong = await this.xummClient.ping();
+      console.log("pong: " + JSON.stringify(pong));
 
-    let pong = await this.xummClient.ping();
-    console.log("pong: " + JSON.stringify(pong));
+      let ottData = await this.xummClient.environment.ott;
 
-    let ottData = await this.xummClient.environment.ott;
+      console.log(ottData);
 
-    console.log(ottData);
+      this.testMode = (ottData.nodetype == 'TESTNET' || ottData.nodetype == 'XAHAUTESTNET');
 
-    this.testMode = (ottData.nodetype == 'TESTNET' || ottData.nodetype == 'XAHAUTESTNET');
+      if(ottData.version) {
+        let version:string[] = ottData.version.split('.');
+        this.xummMajorVersion = Number.parseInt(version[0]);
+        this.xummMinorVersion = Number.parseInt(version[1]);
 
-    if(ottData.version) {
-      let version:string[] = ottData.version.split('.');
-      this.xummMajorVersion = Number.parseInt(version[0]);
-      this.xummMinorVersion = Number.parseInt(version[1]);
-
-      if(this.xummMajorVersion < 2 || (this.xummMajorVersion == 2 && this.xummMinorVersion < 6)) {
-        this.xummOutdated = true;
-        console.log("XUMM IS OUTDATED: " + ottData.version);
-      } else {
-        if(ottData && ottData.account && ottData.accountaccess === 'FULL') {
-
-          //load account data
-          await Promise.all([
-            this.loadXrplAccountData(ottData.account),
-            this.loadXahauAccountData(ottData.account)
-          ]);
-  
-          //await this.loadAccountData(ottData.account); //false = ottResponse.node == 'TESTNET' 
+        if(this.xummMajorVersion < 2 || (this.xummMajorVersion == 2 && this.xummMinorVersion < 6)) {
+          this.xummOutdated = true;
+          console.log("XUMM IS OUTDATED: " + ottData.version);
         } else {
-          this.originalAccountInfo = "no account";
+          if(ottData && ottData.account && ottData.accountaccess === 'FULL') {
+
+            //load account data
+            await Promise.all([
+              this.loadXrplAccountData(ottData.account),
+              this.loadXahauAccountData(ottData.account)
+            ]);
+    
+            //await this.loadAccountData(ottData.account); //false = ottResponse.node == 'TESTNET' 
+          } else {
+            this.originalAccountInfo = "no account";
+          }
         }
       }
-    }
 
-    this.tw = new TypeWriter(["Xahau Services xApp", "created by nixerFFM", "Xahau Services xApp"], t => {
-      this.title = t;
-    })
+      this.tw = new TypeWriter(["Xahau Services xApp", "created by nixerFFM", "Xahau Services xApp"], t => {
+        this.title = t;
+      })
 
-    this.loadingData = false;
-    let readyResult = await this.xummClient.xapp.ready();
-    console.log("READY RESULT: " + readyResult);
+      this.loadingData = false;
+      this.initializing = false;
+      let readyResult = await this.xummClient.xapp.ready();
+      console.log("READY RESULT: " + readyResult);
 
-    let end = Date.now();
+      let end = Date.now();
 
-    console.log("LOADING ALL: " + (end-start) + " ms.");
+      console.log("LOADING ALL: " + (end-start) + " ms.");
 
-    this.tw.start();
+      this.tw.start();
+    });
+    
     //this.infoLabel = JSON.stringify(this.device.getDeviceInfo());
   }
 
@@ -266,6 +268,9 @@ export class XahauImportComponent implements OnInit, OnDestroy {
       let signinPayload = await this.xummClient.payload.create({
         txjson: {
           TransactionType: "SignIn"
+        },
+        custom_meta: {
+          instruction: "- Please select the new account and accept this request."
         }
       });
 
@@ -305,7 +310,7 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
     try {
 
-      let burnPayloadRequest = null;
+      let burnPayloadRequest:XummPostPayloadBodyJson = null;
 
       if(this.xrplAccountHasRegularKey && this.regularKeyAccount) {
         burnPayloadRequest = {
@@ -319,6 +324,9 @@ export class XahauImportComponent implements OnInit, OnDestroy {
             signers: [this.originalAccountInfo.Account],
             submit: false,
             force_network: this.testMode ? this.force_xrpl_test : this.force_xrpl_main
+          },
+          custom_meta: {
+            instruction: "- Please double check the Regular Key shown below! It has to be equal to your current Regular Key set to your XRPL Account.\n\n- Don't sign/accept this request if the shown Regular Key is different to your current Regular Key on your XRPL Account!"
           }
         }
       } else { // use AccountSet transaction!
@@ -332,6 +340,9 @@ export class XahauImportComponent implements OnInit, OnDestroy {
             signers: [this.originalAccountInfo.Account],
             submit: true,
             force_network: this.testMode ? this.force_xrpl_test : this.force_xrpl_main
+          },
+          custom_meta: {
+            instruction: "- Please sign this transaction so we will be able to create an 'Import' transaction for the Xahau Network."
           }
         }
       }
@@ -508,8 +519,6 @@ export class XahauImportComponent implements OnInit, OnDestroy {
         let importPayloadRequest:XummPostPayloadBodyJson = {
           txjson: {
             TransactionType: "Import",
-            Fee: 0,
-            Sequence: this.xahauAccountInfo.Sequence ? this.xahauAccountInfo.Sequence : 0,
             NetworkID: this.testMode ? 21338 : 21337,
             Blob: blob.toUpperCase()
           },
@@ -517,8 +526,23 @@ export class XahauImportComponent implements OnInit, OnDestroy {
             signers: [this.signingAccountForImport],
             submit: true,
             force_network: this.testMode ? this.force_xahau_test : this.force_xahau_main
+          },
+          custom_meta: {
+            instruction: ""
           }
         };
+
+        if(!this.xahauAccountInfo.Account) {
+          importPayloadRequest.custom_meta.instruction += "- Please accept this request to import your account into Xahau!"
+          //non activated account
+          if(this.xrplAccountHasRegularKey) {
+            importPayloadRequest.custom_meta.instruction += "\n\n- This transaction also sets your Regular Key\n( " + this.regularKeyAccount + " )\non your new Xahau Account\n( " + this.originalAccountInfo.Account + " )"
+          }
+        } else {
+          if(this.xrplAccountHasRegularKey) {
+            importPayloadRequest.custom_meta.instruction += "- This transaction sets the Regular Key\n( " + this.regularKeyAccount + " )\non your existing Xahau Account\n( " + this.originalAccountInfo.Account + " )"
+          }
+        }
 
         console.log("IMPORT REQUEST:")
         console.log(importPayloadRequest);
