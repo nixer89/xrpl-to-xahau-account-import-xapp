@@ -533,6 +533,11 @@ export class XahauImportComponent implements OnInit, OnDestroy {
         };
 
         if(!this.xahauAccountInfo.Account) {
+          importPayloadRequest.txjson.Fee = "0";
+          importPayloadRequest.txjson.Sequence = 0;
+        }
+
+        if(!this.xahauAccountInfo.Account) {
           importPayloadRequest.custom_meta.instruction += "- Please accept this request to import your account into Xahau!"
           //non activated account
           if(this.xrplAccountHasRegularKey) {
