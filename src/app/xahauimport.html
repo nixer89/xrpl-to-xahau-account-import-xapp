@@ -148,7 +148,7 @@
 
             <div style="padding-top: 0.5em;" fxLayoutGap="0.5em">
                 <button mat-raised-button color="primary" (click)="moveNext()" [disabled]="!originalAccountInfo || !burn_tx_hash || !burnSuccess|| loadingData">Next</button>
-                <button mat-raised-button class="xumm-grey-background" (click)="moveBack()" [disabled]="!originalAccountInfo || loadingData">Back</button>
+                <button *ngIf="!burnSuccess" mat-raised-button class="xumm-grey-background" (click)="moveBack()" [disabled]="!originalAccountInfo || loadingData">Back</button>
             </div>
         </mat-card>
       </mat-step>

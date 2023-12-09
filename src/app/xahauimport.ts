@@ -293,6 +293,14 @@ export class XahauImportComponent implements OnInit, OnDestroy {
             this.loadXrplAccountData(resolvedPayload.response.account),
             this.loadXahauAccountData(resolvedPayload.response.account)
           ]);
+          
+          this.burn_tx_hash = null;
+          this.burnSuccess = false;
+          this.burnErrorLabel = null;
+
+          this.importSuccess = false;
+          this.import_tx_hash = null;
+          this.importErrorLabel = null;
         }
       }
 
@@ -519,6 +527,7 @@ export class XahauImportComponent implements OnInit, OnDestroy {
         let importPayloadRequest:XummPostPayloadBodyJson = {
           txjson: {
             TransactionType: "Import",
+            Account: this.originalAccountInfo.Account,
             NetworkID: this.testMode ? 21338 : 21337,
             Blob: blob.toUpperCase()
           },

@@ -1,6 +1,6 @@
 {
   "name": "xrpl-to-xahau-account-import-xapp",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve --port 4201 --open --disable-host-check",
@@ -35,8 +35,8 @@
     "tslib": "^2.3.0",
     "verify-xrpl-signature": "^1.0.0",
     "xrpl-tagged-address-codec": "^0.2.1",
-    "xumm": "^1.6.5",
-    "xumm-sdk": "^1.9.1",
+    "xumm": "^1.7.1",
+    "xumm-sdk": "^1.9.2",
     "zone.js": "~0.11.4"
   },
   "devDependencies": {
