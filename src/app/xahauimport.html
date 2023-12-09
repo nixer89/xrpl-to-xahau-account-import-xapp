@@ -70,19 +70,25 @@
               </mat-card>
 
               <mat-card *ngIf="originalAccountInfo && originalAccountInfo.error && originalAccountInfo.error == 'actNotFound' && !xrplAccountHasSignerList && !loadingData" fxLayout="column" class="mat-card-red">
-                <label>Account is not activated on the XRP Ledger {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
+                <label>Your Account is not activated on the XRP Ledger {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
                 <label>You can't use the 'Import' transaction to activate your account on Xahau.</label>
               </mat-card>
 
               <mat-card *ngIf="originalAccountInfo && originalAccountInfo.Account && xahauAccountInfo && xahauAccountInfo.Account && !xrplAccountHasSignerList && !xrplAccountHasRegularKey && !loadingData" fxLayout="column"  class="mat-card-red">
-                <label>Account is already imported or activated on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
+                <label>Your Account is already imported or activated on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
                 <label>You can not claim the 2 XAH for importing an Account anymore.</label>
               </mat-card>
 
-              <mat-card *ngIf="originalAccountInfo && originalAccountInfo.Account && xahauAccountInfo && xahauAccountInfo.Account && !xrplAccountHasSignerList && xrplAccountHasRegularKey && !loadingData" fxLayout="column"  class="mat-card-orange">
-                <label>Account is already imported or activated on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
-                <label>You can not claim the 2 XAH for importing an Account anymore. But you can continue to apply your Regular Key setting of your XRPL account on your Xahau account.</label>
-              </mat-card>
+              <div *ngIf="originalAccountInfo && originalAccountInfo.Account && xahauAccountInfo && xahauAccountInfo.Account && !xrplAccountHasSignerList && xrplAccountHasRegularKey && !loadingData" fxLayout="column" fxLayoutGap="0.3em">
+                <mat-card fxLayout="column" fxLayoutAlign="start center" class="mat-card-orange">
+                  <label>Your Account is already imported or activated on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
+                </mat-card>
+                <label>&nbsp;</label>
+                <label>You can not claim the 2 XAH for importing an Account anymore.</label>
+                <label>However, you can continue to apply your Regular Key setting of your XRPL account on your Xahau account as well.</label>
+              </div>
+
+              
 
               <mat-card *ngIf="originalAccountInfo && xrplAccountHasSignerList && !loadingData" fxLayout="column"  class="mat-card-red">
                 <label>This account has a SignerList set. Such accounts are currently not supported in this xApp.</label>
@@ -120,9 +126,14 @@
 
             <div fxLayout="column" fxLayoutGap="0.5em" *ngIf="originalAccountInfo && xrplAccountHasRegularKey">
               <mat-card class="mat-card-orange" fxLayout="column">
-                <label>We have detected that your account has a Regular Key set on the XRPL. To import your account into Xahau and also copy the regular key setting, we need to exeute a 'SetRegularKey' transaction.</label>
-                <label>This proofs to the Xahau network that you are able to sign transactions for your account using the master key or regular key which lets you import your account later on.</label>
+                <label>We have detected that your account has a Regular Key set on the XRPL.</label>
               </mat-card>
+
+              <label *ngIf="!xahauAccountInfo.Account">To import your account into Xahau and also copy the Regular Key setting, we need to exeute a 'SetRegularKey' transaction.</label>
+              <label *ngIf="!xahauAccountInfo.Account">This proofs to the Xahau network that you are in control of the account and you will be able to import your account later on.</label>
+
+              <label *ngIf="xahauAccountInfo.Account">To copy the Regular Key setting, we need to exeute a 'SetRegularKey' transaction.</label>
+              <label *ngIf="xahauAccountInfo.Account">This proofs to the Xahau network that you are in control of the account and you will be able to import your Regular Key setting later on.</label>
               
               <div fxLayoutAlign="start center" style="padding-top: 0.5em;">
                 <button mat-raised-button color="primary" (click)="executeBurnTransaction()" [disabled]="loadingData || (burn_tx_hash && burnSuccess)">Execute SetRegularkey</button>

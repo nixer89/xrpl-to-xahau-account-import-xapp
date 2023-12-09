@@ -28,8 +28,8 @@
             ],
             "allowedCommonJsDependencies": [
               "copy-to-clipboard",
-              "ripple-binary-codec",
-              "ripple-keypairs"
+              "@transia/ripple-keypairs",
+              "@transia/ripple-binary-codec"
             ],
             "scripts": [],
             "vendorChunk": true,

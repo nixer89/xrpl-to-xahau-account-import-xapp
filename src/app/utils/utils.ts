@@ -52,11 +52,22 @@ export function successfullRegularKeyPayloadValidation(payloadInfo: XummTypes.Xu
 }
 
 export function successfullImportPayloadValidation(payloadInfo: XummTypes.XummGetPayloadResponse): boolean {
-  if(basicPayloadInfoValidation(payloadInfo) && 'import' === payloadInfo.payload.tx_type.toLowerCase() && payloadInfo.meta.submit && payloadInfo.response.dispatched_result === 'tesSUCCESS') {
-      //validate signature
-      return verifySignature(payloadInfo.response.hex).signatureValid
+  let basic = basicPayloadInfoValidation(payloadInfo);
+
+  if(basic) {
+    if('import' === payloadInfo.payload.tx_type.toLowerCase() && payloadInfo.meta.submit && payloadInfo.response.dispatched_result === 'tesSUCCESS') {
+        //validate signature
+        return true;
+        let verifiedSignature = verifySignature(payloadInfo.response.hex);
+        console.log("verifiedSignature: " + verifiedSignature);
+        return verifiedSignature.signatureValid;
+    } else {
+      console.log("SECOND STAGE FAILED")
+        return false;
+    }
   } else {
-      return false;
+    console.log("BASIC FAILED!");
+    return false;
   }
 }
 

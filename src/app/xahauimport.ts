@@ -13,8 +13,8 @@ import * as clipboard from 'copy-to-clipboard';
 import { XummPostPayloadBodyJson, XummPostPayloadResponse } from 'xumm-sdk/dist/src/types';
 import { XummWebsocketResponse } from './utils/types';
 import { Xumm } from 'xumm';
-import { decode } from 'ripple-binary-codec';
-import { deriveAddress } from 'ripple-keypairs';
+import { decode } from '@transia/ripple-binary-codec';
+import { deriveAddress } from '@transia/ripple-keypairs';
 
 @Component({
   selector: 'xahauimport',
@@ -580,10 +580,12 @@ export class XahauImportComponent implements OnInit, OnDestroy {
           console.log(resolvedPayload);
 
           if(resolvedPayload && successfullImportPayloadValidation(resolvedPayload)) {
+            console.log("SUCCESS VERIFICATION");
             this.importErrorLabel = null;
             this.importSuccess = true;
             this.import_tx_hash = resolvedPayload.response.txid;
           } else {
+            console.log("FAILED VERIFICATION");
             this.importSuccess = false;
             this.import_tx_hash = resolvedPayload.response.txid || "abc";
 
