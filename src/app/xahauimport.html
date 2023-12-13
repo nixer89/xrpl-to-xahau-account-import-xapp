@@ -20,7 +20,36 @@
     </mat-card>
   </div>
 
-  <div *ngIf="!initializing && !xummOutdated">
+  <div *ngIf="!initializing && !xummOutdated && switchNetworkNeeded">
+    <mat-card fxLayout="column" fxLayoutAlign="center center" class="margin-5">
+      <ng-template matStepLabel>Switch Network</ng-template>
+      <div fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="0.5em">
+        <mat-card fxLayout="column"  class="mat-card-red">
+          <label>We have detected that you are connected to the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
+        </mat-card>
+
+        <label>We need to switch you back to the XRPL {{testMode ? 'Testnet' : 'Mainnet'}} before you can proceed to use this xApp.</label>
+
+        <div fxLayoutAlign="start center" style="padding-top: 0.5em;">
+          <button mat-raised-button color="primary" (click)="switchNetwork()" [disabled]="loadingData">Switch Network</button>
+        </div>
+      </div>
+
+      <div style="padding-top: 0.5em;" fxLayout="column" fxLayoutGap="0.5em">
+        <mat-card fxLayout="column" *ngIf="switchNetworkFailed !loadingData" fxLayout="column"  class="mat-card-red">
+          <label>Switching Network failed. Please try again or manually change the network by closing this xApp and selecting the correct XRPL network through the options at the top of your Xaman App.</label>
+        </mat-card>
+      </div>
+
+      <div *ngIf="loadingData" fxLayoutAlign="start center">
+        <label>Loading...</label>
+        <label>&nbsp;</label>
+        <mat-progress-spinner color="primary" mode="indeterminate" diameter=25></mat-progress-spinner>
+      </div>
+    </mat-card>
+  </div>
+
+  <div *ngIf="!initializing && !xummOutdated && !switchNetworkNeeded">
     <mat-vertical-stepper linear #importStepper class="theme-background">
       
       <mat-step completed="false" editable="false" fxLayout="column" fxLayoutGap="0.5em">
