@@ -56,11 +56,12 @@ export function successfullImportPayloadValidation(payloadInfo: XummTypes.XummGe
 
   if(basic) {
     if('import' === payloadInfo.payload.tx_type.toLowerCase() && payloadInfo.meta.submit && payloadInfo.response.dispatched_result === 'tesSUCCESS') {
-        //validate signature
+        //submit successfull and also validated.
         return true;
-        let verifiedSignature = verifySignature(payloadInfo.response.hex);
-        console.log("verifiedSignature: " + verifiedSignature);
-        return verifiedSignature.signatureValid;
+        //validate signature
+        //let verifiedSignature = verifySignature(payloadInfo.response.hex);
+        //console.log("verifiedSignature: " + verifiedSignature);
+        //return verifiedSignature.signatureValid;
     } else {
       console.log("SECOND STAGE FAILED")
         return false;

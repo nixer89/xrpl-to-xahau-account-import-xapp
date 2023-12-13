@@ -34,7 +34,7 @@
     "rxjs": "^6.6.7",
     "stream-browserify": "^3.0.0",
     "tslib": "^2.3.0",
-    "verify-xrpl-signature": "^4.0.0",
+    "verify-xrpl-signature": "^4.1.5",
     "xrpl-tagged-address-codec": "^1.0.0",
     "xumm": "^1.7.1",
     "xumm-sdk": "^1.9.2",

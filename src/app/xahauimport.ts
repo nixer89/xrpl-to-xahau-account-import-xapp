@@ -550,11 +550,11 @@ export class XahauImportComponent implements OnInit, OnDestroy {
           importPayloadRequest.custom_meta.instruction += "- Please accept this request to import your account into Xahau!"
           //non activated account
           if(this.xrplAccountHasRegularKey) {
-            importPayloadRequest.custom_meta.instruction += "\n\n- This transaction also sets your Regular Key\n( " + this.regularKeyAccount + " )\non your new Xahau Account\n( " + this.originalAccountInfo.Account + " )"
+            importPayloadRequest.custom_meta.instruction += "\n\n- This transaction also sets your Regular Key\n( " + this.regularKeyAccount + " )\non your new Xahau Account\n( " + this.originalAccountInfo.Account + " )\n\n- YOU HAVE TO SIGN THIS REQUEST WITH YOUR ACCOUNT: " + this.signingAccountForImport;
           }
         } else {
           if(this.xrplAccountHasRegularKey) {
-            importPayloadRequest.custom_meta.instruction += "- This transaction sets the Regular Key\n( " + this.regularKeyAccount + " )\non your existing Xahau Account\n( " + this.originalAccountInfo.Account + " )"
+            importPayloadRequest.custom_meta.instruction += "- This transaction sets the Regular Key\n( " + this.regularKeyAccount + " )\non your existing Xahau Account\n( " + this.originalAccountInfo.Account + " )\n\n- YOU HAVE TO SIGN THIS REQUEST WITH YOUR ACCOUNT: " + this.signingAccountForImport;
           }
         }
 
@@ -581,9 +581,27 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
           if(resolvedPayload && successfullImportPayloadValidation(resolvedPayload)) {
             console.log("SUCCESS VERIFICATION");
-            this.importErrorLabel = null;
-            this.importSuccess = true;
-            this.import_tx_hash = resolvedPayload.response.txid;
+            if(!this.xahauAccountInfo.Account) {
+              //reload Xahau data and check if account exists now!
+              await this.loadXahauAccountData(this.originalAccountInfo.Account);
+
+              if(this.xahauAccountInfo.Account) {
+                this.importErrorLabel = null;
+                this.importSuccess = true;
+                this.import_tx_hash = resolvedPayload.response.txid;    
+              } else {
+                console.log("Account not activated!");
+                this.importSuccess = false;
+                this.import_tx_hash = resolvedPayload.response.txid || "abc";
+                this.importErrorLabel = "It seems your account could not be activated on Xahau. Please double check this in your Xaman app and if your account is still not activated you can just retry the process again."
+              }
+            } else {
+              //it is not an account activation import method, just an import for an already activated account. show ok.
+              this.importErrorLabel = null;
+              this.importSuccess = true;
+              this.import_tx_hash = resolvedPayload.response.txid;
+            }
+            
           } else {
             console.log("FAILED VERIFICATION");
             this.importSuccess = false;
@@ -594,7 +612,7 @@ export class XahauImportComponent implements OnInit, OnDestroy {
             let signerAddress = deriveAddress(decodedHex.SigningPubKey);
 
             if(this.signingAccountForImport != signerAddress) {
-              this.importErrorLabel = "Transaction signer: '"+ signerAddress + "' does not match forces signer: '" + this.signingAccountForImport + "'";
+              this.importErrorLabel = "Transaction signer: '"+ signerAddress + "' does not match previous signer: '" + this.signingAccountForImport + "'.\n\nPlease make sure to sign both transaction with the SAME key!";
             }
           }
         } else {
