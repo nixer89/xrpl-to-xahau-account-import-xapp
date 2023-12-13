@@ -274,32 +274,37 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
       console.log("CREATED SIGN REQUEST");
 
-      let websocketResult = await this.awaitSignResult(signinPayload);
+      if(signinPayload) {
 
-      console.log("GOT RESULT:");
-      console.log(websocketResult);
+        let websocketResult = await this.awaitSignResult(signinPayload);
 
-      if(websocketResult && websocketResult.signed) {
-        //payload was resolved. check it!
-        let resolvedPayload = await this.xummClient.payload.get(signinPayload.uuid);
+        console.log("GOT RESULT:");
+        console.log(websocketResult);
 
-        console.log("PAYLOAD:");
-        console.log(resolvedPayload);
+        if(websocketResult && websocketResult.signed) {
+          //payload was resolved. check it!
+          let resolvedPayload = await this.xummClient.payload.get(signinPayload.uuid);
 
-        if(resolvedPayload && successfullSignInPayloadValidation(resolvedPayload)) {
-          await Promise.all([
-            this.loadXrplAccountData(resolvedPayload.response.account),
-            this.loadXahauAccountData(resolvedPayload.response.account)
-          ]);
-          
-          this.burn_tx_hash = null;
-          this.burnSuccess = false;
-          this.burnErrorLabel = null;
+          console.log("PAYLOAD:");
+          console.log(resolvedPayload);
 
-          this.importSuccess = false;
-          this.import_tx_hash = null;
-          this.importErrorLabel = null;
+          if(resolvedPayload && successfullSignInPayloadValidation(resolvedPayload)) {
+            await Promise.all([
+              this.loadXrplAccountData(resolvedPayload.response.account),
+              this.loadXahauAccountData(resolvedPayload.response.account)
+            ]);
+            
+            this.burn_tx_hash = null;
+            this.burnSuccess = false;
+            this.burnErrorLabel = null;
+
+            this.importSuccess = false;
+            this.import_tx_hash = null;
+            this.importErrorLabel = null;
+          }
         }
+      } else {
+        console.log("ERROR CREATING SIGN IN PAYLOAD");
       }
 
     } catch(err) {
@@ -483,7 +488,10 @@ export class XahauImportComponent implements OnInit, OnDestroy {
             this.burnErrorLabel = "The sign request has expired. Please try again.";
         }
       } else {
-        throw "Error creating Burn payload for account: " + this.originalAccountInfo.Account;
+        console.log("ERROR CREATING BURN PAYLOAD: " + JSON.stringify(burnPayloadRequest));
+        this.burnSuccess = false;
+        this.burn_tx_hash = "abc";
+        this.burnErrorLabel = "Error creating payload. Please try again. If the error persists, please report this issue to @XahauServices on X (Twitter). Thank you."
       }
     } catch(err) {
       console.log(err);
@@ -548,11 +556,11 @@ export class XahauImportComponent implements OnInit, OnDestroy {
           importPayloadRequest.custom_meta.instruction += "- Please accept this request to import your account into Xahau!"
           //non activated account
           if(this.xrplAccountHasRegularKey) {
-            importPayloadRequest.custom_meta.instruction += "\n\n- This transaction also sets your Regular Key\n( " + this.regularKeyAccount + " )\non your new Xahau Account\n( " + this.originalAccountInfo.Account + " )\n\n- YOU HAVE TO SIGN THIS REQUEST WITH YOUR ACCOUNT: " + this.signingAccountForImport;
+            importPayloadRequest.custom_meta.instruction += "\n\n- This transaction also sets your Regular Key\n\n" + this.regularKeyAccount + "\n\non your new Xahau Account\n\n" + this.originalAccountInfo.Account;
           }
         } else {
           if(this.xrplAccountHasRegularKey) {
-            importPayloadRequest.custom_meta.instruction += "- This transaction sets the Regular Key\n( " + this.regularKeyAccount + " )\non your existing Xahau Account\n( " + this.originalAccountInfo.Account + " )\n\n- YOU HAVE TO SIGN THIS REQUEST WITH YOUR ACCOUNT: " + this.signingAccountForImport;
+            importPayloadRequest.custom_meta.instruction += "- Sets the Regular Key\n\n" + this.regularKeyAccount + "\n\non your existing Xahau Account\n\n" + this.originalAccountInfo.Account + "\n\n- YOU HAVE TO SIGN WITH YOUR ACCOUNT: " + this.signingAccountForImport;
           }
         }
 
@@ -564,63 +572,71 @@ export class XahauImportComponent implements OnInit, OnDestroy {
         console.log("IMPORT CREATE PAYLOAD RESPONSE");
 
         console.log(JSON.stringify(importPayloadResponse));
-  
-        let websocketResult = await this.awaitSignResult(importPayloadResponse);
-  
-        console.log("GOT RESULT:");
-        console.log(websocketResult);
-  
-        if(websocketResult && websocketResult.signed) {
-          //payload was resolved. check it!
-          let resolvedPayload = await this.xummClient.payload.get(importPayloadResponse.uuid);
-  
-          console.log("PAYLOAD:");
-          console.log(resolvedPayload);
 
-          if(resolvedPayload && successfullImportPayloadValidation(resolvedPayload)) {
-            console.log("SUCCESS VERIFICATION");
-            if(!this.xahauAccountInfo.Account) {
-              //reload Xahau data and check if account exists now!
-              await this.loadXahauAccountData(this.originalAccountInfo.Account);
+        if(importPayloadRequest) {
+  
+          let websocketResult = await this.awaitSignResult(importPayloadResponse);
+    
+          console.log("GOT RESULT:");
+          console.log(websocketResult);
+    
+          if(websocketResult && websocketResult.signed) {
+            //payload was resolved. check it!
+            let resolvedPayload = await this.xummClient.payload.get(importPayloadResponse.uuid);
+    
+            console.log("PAYLOAD:");
+            console.log(resolvedPayload);
 
-              if(this.xahauAccountInfo.Account) {
+            if(resolvedPayload && successfullImportPayloadValidation(resolvedPayload)) {
+              console.log("SUCCESS VERIFICATION");
+              if(!this.xahauAccountInfo.Account) {
+                //reload Xahau data and check if account exists now!
+                await this.loadXahauAccountData(this.originalAccountInfo.Account);
+
+                if(this.xahauAccountInfo.Account) {
+                  this.importErrorLabel = null;
+                  this.importSuccess = true;
+                  this.import_tx_hash = resolvedPayload.response.txid;    
+                } else {
+                  console.log("Account not activated!");
+                  this.importSuccess = false;
+                  this.import_tx_hash = resolvedPayload.response.txid || "abc";
+                  this.importErrorLabel = "It seems your account could not be activated on Xahau. Please double check this in your Xaman app and if your account is still not activated you can just retry the process again."
+                }
+              } else {
+                //it is not an account activation import method, just an import for an already activated account. show ok.
                 this.importErrorLabel = null;
                 this.importSuccess = true;
-                this.import_tx_hash = resolvedPayload.response.txid;    
-              } else {
-                console.log("Account not activated!");
-                this.importSuccess = false;
-                this.import_tx_hash = resolvedPayload.response.txid || "abc";
-                this.importErrorLabel = "It seems your account could not be activated on Xahau. Please double check this in your Xaman app and if your account is still not activated you can just retry the process again."
+                this.import_tx_hash = resolvedPayload.response.txid;
               }
+              
             } else {
-              //it is not an account activation import method, just an import for an already activated account. show ok.
-              this.importErrorLabel = null;
-              this.importSuccess = true;
-              this.import_tx_hash = resolvedPayload.response.txid;
+              console.log("FAILED VERIFICATION");
+              this.importSuccess = false;
+              this.import_tx_hash = resolvedPayload.response.txid || "abc";
+
+              let trxBlob = resolvedPayload.response.hex;
+              let decodedHex = decode(trxBlob);
+              let signerAddress = deriveAddress(decodedHex.SigningPubKey);
+
+              if(this.signingAccountForImport != signerAddress) {
+                this.importErrorLabel = "Transaction signer: '"+ signerAddress + "' does not match previous signer: '" + this.signingAccountForImport + "'.\n\nPlease make sure to sign both transaction with the SAME key!";
+              }
             }
-            
           } else {
-            console.log("FAILED VERIFICATION");
             this.importSuccess = false;
-            this.import_tx_hash = resolvedPayload.response.txid || "abc";
+            this.import_tx_hash = "abc";
 
-            let trxBlob = resolvedPayload.response.hex;
-            let decodedHex = decode(trxBlob);
-            let signerAddress = deriveAddress(decodedHex.SigningPubKey);
-
-            if(this.signingAccountForImport != signerAddress) {
-              this.importErrorLabel = "Transaction signer: '"+ signerAddress + "' does not match previous signer: '" + this.signingAccountForImport + "'.\n\nPlease make sure to sign both transaction with the SAME key!";
-            }
+            if(websocketResult.declined)
+              this.importErrorLabel = "You declined the sign request.";
+            else if(websocketResult.expired)
+              this.importErrorLabel = "The sign request has expired. Please try again.";
           }
         } else {
+          console.log("ERROR CREATING IMPORT PAYLOAD: " + JSON.stringify(importPayloadRequest));
           this.importSuccess = false;
           this.import_tx_hash = "abc";
-
-          if(websocketResult.declined)
-            this.importErrorLabel = "You declined the sign request.";
-          else if(websocketResult.expired)
-            this.importErrorLabel = "The sign request has expired. Please try again.";
+          this.importErrorLabel = "Error creating payload. Please try again. If the error persists, please report this issue to @XahauServices on X (Twitter). Thank you."
         }
       } else {
         console.log("ERROR RESOLVING BLOB")
