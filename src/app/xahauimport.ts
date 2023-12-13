@@ -48,8 +48,7 @@ export class XahauImportComponent implements OnInit, OnDestroy {
   xahauAccountInfo:any;
 
   testMode:boolean = false;
-  switchNetworkNeeded:boolean = false;
-  switchNetworkFailed:boolean = false;
+  networkSwitchNeeded:boolean = false;
 
   force_xrpl_main:string = "MAINNET";
   force_xrpl_test:string = "TESTNET";
@@ -127,7 +126,8 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
       this.testMode = (ottData.nodetype == this.force_xrpl_test || ottData.nodetype == this.force_xahau_test);
 
-      this.switchNetworkNeeded = (ottData.nodetype == this.force_xahau_main || ottData.nodetype == this.force_xahau_test);
+      //XRPL net needed as next. show info about network switch
+      this.networkSwitchNeeded = ottData.nodetype != this.force_xrpl_main || ottData.nodetype != this.force_xrpl_test;
 
       if(ottData.version) {
         let version:string[] = ottData.version.split('.');
@@ -265,29 +265,32 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
     console.log("CHANGE ACCOUNT PRESSED");
 
-    
     try {
-      let signinPayload = await this.xummClient.payload.create({
+      let signInPayloadRequest:XummPostPayloadBodyJson = {
         txjson: {
           TransactionType: "SignIn"
+        },
+        options: {
+          force_network: this.testMode ? this.force_xrpl_test : this.force_xrpl_main
         },
         custom_meta: {
           instruction: "- Please select the new account and accept this request."
         }
-      });
+      }
+      let signinPayloadResponse = await this.xummClient.payload.create(signInPayloadRequest);
 
       console.log("CREATED SIGN REQUEST");
 
-      if(signinPayload) {
+      if(signinPayloadResponse) {
 
-        let websocketResult = await this.awaitSignResult(signinPayload);
+        let websocketResult = await this.awaitSignResult(signinPayloadResponse);
 
         console.log("GOT RESULT:");
         console.log(websocketResult);
 
         if(websocketResult && websocketResult.signed) {
           //payload was resolved. check it!
-          let resolvedPayload = await this.xummClient.payload.get(signinPayload.uuid);
+          let resolvedPayload = await this.xummClient.payload.get(signinPayloadResponse.uuid);
 
           console.log("PAYLOAD:");
           console.log(resolvedPayload);
@@ -305,70 +308,6 @@ export class XahauImportComponent implements OnInit, OnDestroy {
             this.importSuccess = false;
             this.import_tx_hash = null;
             this.importErrorLabel = null;
-          }
-        }
-      } else {
-        console.log("ERROR CREATING SIGN IN PAYLOAD");
-      }
-
-    } catch(err) {
-      this.handleError(err);
-    }
-
-    this.loadingData = false;
-  
-  }
-
-  async switchNetwork() {
-    this.loadingData = true;
-
-    console.log("SWITCHING NETWORK");
-
-    
-    try {
-
-      let switchNetworkPayloadRequest:XummPostPayloadBodyJson = {
-        txjson: {
-          TransactionType: "SignIn"
-        },
-        options: {
-          force_network: this.testMode ? this.force_xrpl_test : this.force_xrpl_main
-        },
-        custom_meta: {
-          instruction: "- Please select the new account and accept this request."
-        }
-      }
-
-      let swithNetworkPayload = await this.xummClient.payload.create(switchNetworkPayloadRequest);
-
-      console.log("CREATED SWITCH NETWORK REQUEST");
-
-      if(swithNetworkPayload) {
-
-        let websocketResult = await this.awaitSignResult(swithNetworkPayload);
-
-        console.log("GOT RESULT:");
-        console.log(websocketResult);
-
-        if(websocketResult && websocketResult.signed) {
-          //payload was resolved. check it!
-          let resolvedPayload = await this.xummClient.payload.get(swithNetworkPayload.uuid);
-
-          console.log("PAYLOAD:");
-          console.log(resolvedPayload);
-
-          if(resolvedPayload && successfullSignInPayloadValidation(resolvedPayload)) {
-            if(resolvedPayload.response.environment_nodetype === this.force_xrpl_main || resolvedPayload.response.environment_nodetype === this.force_xrpl_test) {
-              await Promise.all([
-                this.loadXrplAccountData(resolvedPayload.response.account),
-                this.loadXahauAccountData(resolvedPayload.response.account)
-              ]);
-              this.switchNetworkNeeded = false;
-              this.switchNetworkFailed = false;
-              this.snackBar.open("Network switch successful", null, {panelClass: 'snackbar-success', duration: 2000, horizontalPosition: 'center', verticalPosition: 'top'});
-            } else {
-              this.switchNetworkFailed = true;
-            }
           }
         }
       } else {
