@@ -167,8 +167,12 @@
         <mat-card fxLayout="column" fxLayoutGap="0.5em">
             <ng-template matStepLabel>Import Transaction</ng-template>
             <div fxLayout="column" fxLayoutGap="0.5em" *ngIf="originalAccountInfo">
-              <mat-card class="mat-card-orange">
+              <mat-card *ngIf="!xahauAccountInfo.Account" class="mat-card-orange">
                 <label>To activate your Xahau account, we need to execute an "Import" transaction on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
+              </mat-card>
+
+              <mat-card *ngIf="xahauAccountInfo.Account" class="mat-card-orange">
+                <label>To set the Regular Key on your Xahau account, we need to execute an "Import" transaction on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
               </mat-card>
 
               <label>If you click the button below, an Import transaction for your account is generated and you will be asked to switch the network to the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
