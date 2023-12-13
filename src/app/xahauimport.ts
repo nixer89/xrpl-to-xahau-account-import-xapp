@@ -151,7 +151,7 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
       this.tw = new TypeWriter(["Xahau Services xApp", "created by nixerFFM", "Xahau Services xApp"], t => {
         this.title = t;
-      })
+      });
 
       this.loadingData = false;
       this.initializing = false;
@@ -177,7 +177,6 @@ export class XahauImportComponent implements OnInit, OnDestroy {
     try {
       //this.infoLabel = "loading " + xrplAccount;
       if(xrplAccount && isValidXRPAddress(xrplAccount)) {
-        this.loadingData = true;
         
         let account_info_request = {
           command: "account_info",
@@ -227,7 +226,6 @@ export class XahauImportComponent implements OnInit, OnDestroy {
     try {
       //this.infoLabel = "loading " + xrplAccount;
       if(xahauAccount && isValidXRPAddress(xahauAccount)) {
-        this.loadingData = true;
         
         let account_info_request:any = {
           command: "account_info",
