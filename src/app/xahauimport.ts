@@ -48,7 +48,7 @@ export class XahauImportComponent implements OnInit, OnDestroy {
   xahauAccountInfo:any;
 
   testMode:boolean = false;
-  networkSwitchNeeded:boolean = false;
+  currentUserNetwork:string = null;
 
   force_xrpl_main:string = "MAINNET";
   force_xrpl_test:string = "TESTNET";
@@ -127,7 +127,7 @@ export class XahauImportComponent implements OnInit, OnDestroy {
       this.testMode = (ottData.nodetype == this.force_xrpl_test || ottData.nodetype == this.force_xahau_test);
 
       //XRPL net needed as next. show info about network switch
-      this.networkSwitchNeeded = ottData.nodetype != this.force_xrpl_main || ottData.nodetype != this.force_xrpl_test;
+      this.currentUserNetwork = ottData.nodetype;
 
       if(ottData.version) {
         let version:string[] = ottData.version.split('.');
@@ -155,6 +155,12 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
       this.tw = new TypeWriter(["Xahau Services xApp", "created by nixerFFM", "Xahau Services xApp"], t => {
         this.title = t;
+      });
+
+      this.xummClient.on('networkswitch', async switched => {
+        if(switched && switched.network) {
+          this.currentUserNetwork = switched.network;
+        }
       });
 
       this.loadingData = false;
@@ -688,16 +694,22 @@ export class XahauImportComponent implements OnInit, OnDestroy {
                       websocketResponse.declined = true
                     }
 
+                    payloadSubscription.websocket.close();
+                    payloadSubscription.resolve();
                     resolve(websocketResponse);
                   } else if (message.data.closed) {
                     console.log("Sign request has been DECLINED");
                     //request has been declined/closed
                     websocketResponse.declined = true;
+                    payloadSubscription.websocket.close();
+                    payloadSubscription.resolve();
                     resolve(websocketResponse);
                   } else if (message.data.expired) {
                     console.log("Sign request has been EXPIRED");
                     //request has been declined/closed
                     websocketResponse.expired = true;
+                    payloadSubscription.websocket.close();
+                    payloadSubscription.resolve();
                     resolve(websocketResponse);
                   }
                 } else {
@@ -705,6 +717,32 @@ export class XahauImportComponent implements OnInit, OnDestroy {
                 }
               }
             );
+
+            this.xummClient.xapp.on('payload', async payload => {
+              try {
+                if(payload && payload.reason && payload.uuid === createdPayload.uuid) {
+                  console.log("received xApp event");
+                  console.log("reason: " + payload.reason)
+                  if(!websocketResponse.declined && !websocketResponse.signed) { //if we have not set one of those, then websocket might not have sent it yet ?!
+                    websocketResponse.opened = true;
+
+                    if(payload.reason === 'DECLINED')
+                      websocketResponse.declined = true;
+                    else if(payload.reason === 'SIGNED')
+                      websocketResponse.signed = true;
+
+                    //unsubscribe from all!
+                    payloadSubscription.websocket.close();
+                    payloadSubscription.resolve();
+                    resolve(websocketResponse);
+                  }
+                }
+              } catch(err) {
+                console.log(err)
+                this.handleError(err);
+                resolve(null);
+              }
+            });
     
             if (payloadSubscription) {
               //present payload to user
