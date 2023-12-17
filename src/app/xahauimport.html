@@ -64,7 +64,7 @@
                 <label>You can not claim the 2 XAH for importing an account anymore.</label>
               </mat-card>
 
-              <div fxLayout="column" fxLayoutAlign="start center" style="padding-top: 0.5em;">
+              <div fxLayout="column" fxLayoutAlign="start start" style="padding-top: 0.5em;">
                 <button mat-raised-button color="primary" (click)="changeAccount()" [disabled]="loadingData">{{originalAccountInfo && (originalAccountInfo.Account || originalAccountInfo.account) ? 'Change Account' : 'Sign In' }}</button>
               </div>
             </div>
