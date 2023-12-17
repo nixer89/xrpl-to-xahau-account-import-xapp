@@ -64,7 +64,7 @@
                 <label>You can not claim the 2 XAH for importing an account anymore.</label>
               </mat-card>
 
-              <div fxLayoutAlign="start center" style="padding-top: 0.5em;">
+              <div fxLayout="column" fxLayoutAlign="start center" style="padding-top: 0.5em;">
                 <button mat-raised-button color="primary" (click)="changeAccount()" [disabled]="loadingData">{{originalAccountInfo && (originalAccountInfo.Account || originalAccountInfo.account) ? 'Change Account' : 'Sign In' }}</button>
               </div>
             </div>
@@ -197,7 +197,7 @@
 
               <mat-card *ngIf="import_tx_hash && importSuccess && !loadingData" fxLayout="column" class="mat-card-green">
                 <label>The Import transaction was successful on the Xahau {{testMode ? 'Testnet' : 'Mainnet'}}.</label>
-                <label>You can close the xApp now!</label>
+                <label>You can start another import with a different account or choose to close the xApp!</label>
               </mat-card>
             </div>
 
@@ -207,8 +207,9 @@
               <mat-progress-spinner color="primary" mode="indeterminate" diameter=25></mat-progress-spinner>
             </div>
 
-            <div *ngIf="import_tx_hash && importSuccess && !loadingData" style="padding-top: 1em;" fxLayoutGap="0.5em" fxLayoutAlign="center center">
-              <button mat-raised-button class="xumm-grey-background" (click)="close()" [disabled]="loadingData">Close</button>
+            <div *ngIf="import_tx_hash && importSuccess && !loadingData" style="padding-top: 1em;" fxLayout="column" fxLayoutGap="0.5em" fxLayoutAlign="center center">
+              <button mat-raised-button color="primary" (click)="startNewImport()" [disabled]="loadingData">Start New Import</button>
+              <button mat-raised-button class="xumm-grey-background" (click)="close()" [disabled]="loadingData">Close xApp</button>
           </div>
         </mat-card>
       </mat-step>

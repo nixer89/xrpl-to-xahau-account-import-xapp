@@ -763,6 +763,25 @@ export class XahauImportComponent implements OnInit, OnDestroy {
     return null;
   }
 
+  isXahauConnected() {
+    return this.currentUserNetwork === (this.testMode ? this.force_xahau_test : this.force_xahau_main);
+  }
+
+  isXrplConnected() {
+    return this.currentUserNetwork === (this.testMode ? this.force_xrpl_main : this.force_xrpl_main);
+  }
+
+  startNewImport() {
+
+    this.originalAccountInfo = this.xahauAccountInfo = "no account";
+    this.burnErrorLabel = this.burn_tx_hash = this.regularKeyAccount = this.importErrorLabel = this.import_tx_hash = this.signingAccountForImport = this.errorLabel = null;
+    this.xrplAccountHasRegularKey = this.xrplAccountHasSignerList = this.burnSuccess = this.importSuccess = this.isMasterKeyDisabled = this.loadingData = false;
+
+    this.moveBack();
+    this.moveBack();
+    this.scrollToTop();
+  }
+
   openTermsAndConditions() {
     if (typeof window.ReactNativeWebView !== 'undefined') {
       //this.infoLabel = "opening sign request";
@@ -820,6 +839,7 @@ export class XahauImportComponent implements OnInit, OnDestroy {
   scrollToTop() {
     window.scrollTo(0, 0);
   }
+
 
   handleError(err) {
     if(err && JSON.stringify(err).length > 2) {
