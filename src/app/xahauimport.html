@@ -12,6 +12,11 @@
   <label *ngIf="infoLabel2" style="color: red">{{infoLabel2}}</label>
   <label *ngIf="infoLabel3" style="color: red">{{infoLabel3}}</label-->
 
+  <mat-card *ngIf="initializing" class="mat-card-orange  margin-5" fxLayout="row" fxLayoutAlign="center center" fxLayoutGap="0.5em;">
+    <label>Initializing. Please wait... </label>
+    <mat-progress-spinner color="primary" mode="indeterminate" diameter=25></mat-progress-spinner>
+  </mat-card>
+
   <div *ngIf="!initializing && xummOutdated">
     <mat-card fxFlex fxLayout="column" fxLayoutAlign="start center" class="mat-card-orange margin-5">
       <label style="text-align: center;">Your current Xumm/Xaman App version is: {{xummMajorVersion}}.{{xummMinorVersion}}.</label>

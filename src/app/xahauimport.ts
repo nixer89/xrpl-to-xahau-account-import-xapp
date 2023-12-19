@@ -143,7 +143,8 @@ export class XahauImportComponent implements OnInit, OnDestroy {
             //load account data
             await Promise.all([
               this.loadXrplAccountData(ottData.account),
-              this.loadXahauAccountData(ottData.account)
+              this.loadXahauAccountData(ottData.account),
+              new Promise(resolve => setTimeout(resolve, 1000))
             ]);
     
             //await this.loadAccountData(ottData.account); //false = ottResponse.node == 'TESTNET' 
