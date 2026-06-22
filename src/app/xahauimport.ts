@@ -100,10 +100,6 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
     this.xummClient = window['xummClient'];
 
-    this.loadingBackend = true;
-    this.backendAvailable = (await this.xummClient.ping()).application.uuidv4 !== null;
-    this.loadingBackend = false;
-
     this.themeReceived = this.themeChanged.subscribe(async appStyle => {
 
       let start = Date.now();
@@ -121,7 +117,11 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
       console.log("THEME SET TO: " + this.themeClass);
 
+      this.loadingBackend = true;
       let pong = await this.xummClient.ping();
+      this.backendAvailable = (pong.application.uuidv4 !== null);
+      console.log("backend available: " + this.backendAvailable);
+      this.loadingBackend = false;
       console.log("pong: " + JSON.stringify(pong));
 
       let ottData = await this.xummClient.environment.ott;
