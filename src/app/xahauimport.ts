@@ -83,9 +83,6 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
   errorLabel:string = null;
 
-  accountReserve:number = 10000000;
-  ownerReserve:number = 2000000;
-
   termsAndConditions:boolean = false;
 
   xummOutdated:boolean = false;
@@ -94,11 +91,18 @@ export class XahauImportComponent implements OnInit, OnDestroy {
 
   xummClient:Xumm;
 
+  loadingBackend:boolean = true;
+  backendAvailable:boolean = false;
+
   //app loaded, to other stuff now!
 
   async ngOnInit() {
 
     this.xummClient = window['xummClient'];
+
+    this.loadingBackend = true;
+    this.backendAvailable = (await this.xummClient.ping()).application.uuidv4 !== null;
+    this.loadingBackend = false;
 
     this.themeReceived = this.themeChanged.subscribe(async appStyle => {
 

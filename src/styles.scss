@@ -78,6 +78,10 @@ body .snackbar-failed {
     font-weight: bold;
 }
 
+.warning-background {
+    background-color: #fc1a1a !important;
+}
+
 @media (max-width:599px) {
     
     .mat-expansion-panel-header {

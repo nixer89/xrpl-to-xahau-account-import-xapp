@@ -1,5 +1,9 @@
 <div [class]="themeClass" fxFlex fxLayout="column">
   
+  <mat-card *ngIf="!loadingBackend && !backendAvailable" class="warning-background" fxLayout="row" fxLayoutAlign="center center" ngStyle.xs="font-size: 0.9em; white-space: pre-wrap;">
+    <label>Maintenance currently ongoing. We are back soon! Thank you for your understanding!</label>
+  </mat-card>
+
   <mat-card class="mat-card-red" *ngIf="errorLabel" fxLayout="column" fxLayoutGap="0.5em;">
     <label>Sorry that this error happened! Please copy the following error and contact @XrplServices on twitter or send a mail to: info@xrpl.services . Thanks for your help!</label><br>
     <label class="break-words" (click)="copyError()">{{errorLabel}}</label>
@@ -25,7 +29,7 @@
     </mat-card>
   </div>
 
-  <div *ngIf="!initializing && !xummOutdated">
+  <div *ngIf="!initializing && !xummOutdated && !loadingBackend && backendAvailable">
     <mat-vertical-stepper linear #importStepper class="theme-background">
       
       <mat-step completed="false" editable="false" fxLayout="column" fxLayoutGap="0.5em">
